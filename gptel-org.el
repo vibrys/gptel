@@ -42,31 +42,32 @@
 (declare-function org-at-heading-p "org")
 
 ;; Bundle `org-element-lineage-map' if it's not available (for Org 9.67 or older)
-(eval-when-compile
-  (if (fboundp 'org-element-lineage-map)
-      (progn (declare-function org-element-lineage-map "org-element-ast")
-             (defalias 'gptel-org--element-lineage-map 'org-element-lineage-map))
-    (defun gptel-org--element-lineage-map (datum fun &optional types with-self first-match)
-      "Map FUN across ancestors of DATUM, from closest to furthest.
+;;(eval-when-compile
+(if (fboundp 'org-element-lineage-map)
+    (progn (declare-function org-element-lineage-map "org-element-ast")
+           (defalias 'gptel-org--element-lineage-map 'org-element-lineage-map))
+  (defun gptel-org--element-lineage-map (datum fun &optional types with-self first-match)
+    "Map FUN across ancestors of DATUM, from closest to furthest.
 
 DATUM is an object or element.  For TYPES, WITH-SELF and
 FIRST-MATCH see `org-element-lineage-map'.
 
 This function is provided for compatibility with older versions
 of Org."
-      (declare (indent 2))
-      (setq fun (if (functionp fun) fun `(lambda (node) ,fun)))
-      (let ((up (if with-self datum (org-element-parent datum)))
-	    acc rtn)
-        (catch :--first-match
-          (while up
-            (when (or (not types) (org-element-type-p up types))
-              (setq rtn (funcall fun up))
-              (if (and first-match rtn)
-                  (throw :--first-match rtn)
-                (when rtn (push rtn acc))))
-            (setq up (org-element-parent up)))
-          (nreverse acc))))))
+    (declare (indent 2))
+    (setq fun (if (functionp fun) fun `(lambda (node) ,fun)))
+    (let ((up (if with-self datum (org-element-parent datum)))
+          acc rtn)
+      (catch :--first-match
+        (while up
+          (when (or (not types) (org-element-type-p up types))
+            (setq rtn (funcall fun up))
+            (if (and first-match rtn)
+                (throw :--first-match rtn)
+              (when rtn (push rtn acc))))
+          (setq up (org-element-parent up)))
+        (nreverse acc)))))
+;;)
 
 
 ;;; User options
@@ -170,8 +171,8 @@ value of `gptel-org-branching-context', which see."
             (save-excursion
               (let* ((org-buf (current-buffer))
                      (start-bounds (gptel-org--element-lineage-map
-                                       (org-element-at-point) #'org-element-begin
-                                     '(headline org-data) 'with-self))
+                                    (org-element-at-point) #'org-element-begin
+                                    '(headline org-data) 'with-self))
                      (end-bounds
                       (cl-loop
                        for pos in (cdr start-bounds)
@@ -203,8 +204,8 @@ value of `gptel-org-branching-context', which see."
                   (let ((major-mode 'org-mode))
                     (gptel--parse-buffer gptel-backend max-entries)))))
           (display-warning
-             '(gptel org)
-             "Using `gptel-org-branching-context' requires Org version 9.6.7 or higher, it will be ignored.")
+           '(gptel org)
+           "Using `gptel-org-branching-context' requires Org version 9.6.7 or higher, it will be ignored.")
           (gptel--parse-buffer gptel-backend max-entries))
       (when (and gptel-force-prompt-context-be-explicit (buffer-file-name))
         (error "explicit prompt context forced but org's branching context is not set"))
@@ -220,7 +221,7 @@ system message, model and provider (backend), among other
 parameters."
   (if (derived-mode-p 'org-mode)
       (pcase-let ((`(,gptel--system-message ,gptel-backend ,gptel-model
-                     ,gptel-temperature ,gptel-max-tokens)
+                                            ,gptel-temperature ,gptel-max-tokens)
                    (seq-mapn (lambda (a b) (or a b))
                              (gptel-org--entry-properties)
                              (list gptel--system-message gptel-backend gptel-model
@@ -242,10 +243,10 @@ parameters."
   "Find gptel configuration properties stored in the current heading."
   (pcase-let
       ((`(,system ,backend ,model ,temperature ,tokens)
-         (mapcar
-          (lambda (prop) (org-entry-get (or pt (point)) prop 'selective))
-          '("GPTEL_SYSTEM" "GPTEL_BACKEND" "GPTEL_MODEL"
-            "GPTEL_TEMPERATURE" "GPTEL_MAX_TOKENS"))))
+        (mapcar
+         (lambda (prop) (org-entry-get (or pt (point)) prop 'selective))
+         '("GPTEL_SYSTEM" "GPTEL_BACKEND" "GPTEL_MODEL"
+           "GPTEL_TEMPERATURE" "GPTEL_MAX_TOKENS"))))
     (when system
       (setq system (string-replace "\\n" "\n" system)))
     (when backend
@@ -299,7 +300,7 @@ non-nil (default), display a message afterwards."
     (org-entry-put pt "GPTEL_TEMPERATURE"
                    (number-to-string gptel-temperature)))
   (org-entry-put pt "GPTEL_SYSTEM"
-                 (string-replace "\n" "\\n" gptel--system-message))   
+                 (string-replace "\n" "\\n" gptel--system-message))
   (when gptel-max-tokens
     (org-entry-put
      pt "GPTEL_MAX_TOKENS" (number-to-string gptel-max-tokens)))
@@ -347,8 +348,8 @@ elements."
              (while (search-forward ticks nil t)
                (unless (or (eq (char-before (match-beginning 0)) ?`)
                            (eq (char-after) ?`))
-                   (gptel--replace-source-marker (length ticks) 'end)
-                   (throw 'block-end nil))))))
+                 (gptel--replace-source-marker (length ticks) 'end)
+                 (throw 'block-end nil))))))
         ;; Handle headings
         ((and (guard (eq (char-before) ?#)) heading)
          (when (looking-at "[[:space:]]")
@@ -495,7 +496,7 @@ text stream."
           (if noop-p
               (buffer-substring (point) start-pt)
             (prog1 (buffer-substring (point) (point-max))
-                   (set-marker start-pt (point-max)))))))))
+              (set-marker start-pt (point-max)))))))))
 
 (provide 'gptel-org)
 ;;; gptel-org.el ends here
